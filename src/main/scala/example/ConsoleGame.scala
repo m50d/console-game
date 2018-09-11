@@ -1,10 +1,13 @@
 package example
 
-import org.fusesource.jansi.{ AnsiConsole, Ansi }
-import jline.console.{ ConsoleReader, KeyMap, Operation }
-import scala.concurrent.{ blocking, Future, ExecutionContext }
+import org.fusesource.jansi.{Ansi, AnsiConsole}
+import jline.console.{ConsoleReader, KeyMap, Operation}
+
+import scala.concurrent.{ExecutionContext, Future, blocking}
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.ArrayBlockingQueue
+
+import cats.data.State
 
 object ConsoleGame extends App {
   val reader = new ConsoleReader()
@@ -13,7 +16,7 @@ object ConsoleGame extends App {
   case class GameState(pos: (Int, Int))
   var gameState: GameState = GameState(pos = (6, 7))
 
-  AnsiConsole.out.println(Draw.eraseScreen.run(Ansi.ansi())._1)
+  AnsiConsole.out.println(Draw.eraseScreen.run(Ansi.ansi()).value._1)
 
   import ExecutionContext.Implicits._
 
@@ -82,13 +85,13 @@ object ConsoleGame extends App {
     }
 
   def drawGame(g: GameState): Unit = {
-    val drawing: BuilderHelper[Ansi, Unit] =
+    val drawing: State[Ansi, Unit] =
       for {
         _ <- Draw.drawBox(2, 6, 20, 6)
         _ <- Draw.drawBlock(g.pos._1, g.pos._2)
         _ <- Draw.drawText(2, 12, "press 'q' to quit")
       } yield ()
-    val result = drawing.run(Ansi.ansi())._1
+    val result = drawing.run(Ansi.ansi()).value._1
     AnsiConsole.out.println(result)
   }
 }
